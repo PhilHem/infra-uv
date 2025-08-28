@@ -20,13 +20,13 @@ jobs:
           version: latest
 
       - name: Install dependencies
-        run: just install-dev
+        run: uvx just install-dev
 
       - name: Run linting
-        run: just lint
+        run: uvx just lint
 
       - name: Run tests
-        run: just test
+        run: uvx just test
 
       - name: Run the main script
-        run: just run
+        run: uvx just run
