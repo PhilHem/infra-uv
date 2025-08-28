@@ -1,6 +1,6 @@
 [project]
 name = "infra-uv"
-version = "0.2.0"
+version = "0.2.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -59,14 +59,9 @@ select = [
     # pep8-naming (N)
     "N",
     # PERFLINT
-    "PERF"
+    "PERF",
 ]
 ignore = ["N999"]
 
 [dependency-groups]
-dev = [
-    "pytest>=8.4.1",
-    "pytest-cov>=6.2.1",
-    "ruff>=0.12.10",
-    "toml>=0.10.0",
-]
+dev = ["pytest>=8.4.1", "pytest-cov>=6.2.1", "ruff>=0.12.10", "toml>=0.10.0"]
