@@ -72,6 +72,7 @@ if install_uv():
 | `just lint` | Run linting |
 | `just ci` | Run both tests and linting (CI checks) |
 | `just check-uv` | Check if uv is installed |
+| `just check-git` | Check if git is up to date |
 | `just dry-run-uv` | Dry run installation analysis |
 | `just install-uv` | Install uv if needed |
 | `just coverage-report` | View coverage report |

@@ -44,6 +44,10 @@ install-uv:
 dry-run-uv:
     uv run python -c "from uv_check import dry_run_install_uv; import json; result = dry_run_install_uv(); print(json.dumps(result, indent=2))"
 
+# Check if git is up to date
+check-git:
+    uv run python -c "from uv_check import ensure_git_up_to_date; ensure_git_up_to_date()"
+
 # Format code
 fmt:
     uv run black .

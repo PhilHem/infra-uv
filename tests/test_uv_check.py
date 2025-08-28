@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 # Add the parent directory to the path so we can import uv_check
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from uv_check import dry_run_install_uv, install_uv, is_uv_installed, main
+from uv_check import dry_run_install_uv, install_uv, is_uv_installed, main, check_git_up_to_date, ensure_git_up_to_date
 
 
 def test_is_uv_installed_when_available():
@@ -138,3 +138,72 @@ def test_main_when_uv_not_installed():
 
         # Verify print was called multiple times (for the formatted output)
         assert mock_print.call_count > 1
+
+
+def test_ensure_git_up_to_date_prints_error_message():
+    """Test that ensure_git_up_to_date prints error messages when git is not up to date."""
+    with patch("subprocess.run") as mock_run, patch("sys.exit") as mock_exit, patch("builtins.print") as mock_print:
+        # Mock git commands to simulate not up to date scenario
+        mock_run.side_effect = [
+            type("obj", (object,), {"returncode": 0})(),  # git rev-parse --git-dir (success)
+            type("obj", (object,), {"returncode": 0})(),  # git fetch (success)
+            type("obj", (object,), {"returncode": 0, "stdout": "main\n"}),  # git rev-parse --abbrev-ref HEAD (success)
+            type("obj", (object,), {"returncode": 0, "stdout": "abc123\n"}),  # git rev-parse HEAD (success)
+            type(
+                "obj", (object,), {"returncode": 0, "stdout": "def456\n"}
+            ),  # git rev-parse origin/main (different commit)
+        ]
+
+        ensure_git_up_to_date()
+
+        # Verify error messages were printed
+        mock_print.assert_any_call("❌ Error: Current git representation is not up to date.")
+        mock_print.assert_any_call("Please update your repository with:")
+        mock_print.assert_any_call("  git pull origin main")
+        mock_exit.assert_called_once_with(1)
+
+
+def test_check_git_up_to_date_when_git_rev_parse_fails():
+    """Test that check_git_up_to_date returns True when git rev-parse --git-dir fails."""
+    with patch("subprocess.run") as mock_run:
+        # Mock git rev-parse --git-dir to fail with CalledProcessError
+        mock_run.side_effect = subprocess.CalledProcessError(1, "git rev-parse --git-dir")
+        assert check_git_up_to_date() is True
+
+
+def test_check_git_up_to_date_when_git_fetch_fails():
+    """Test that check_git_up_to_date returns True when git fetch fails."""
+    with patch("subprocess.run") as mock_run:
+        # Mock git commands to simulate git fetch failure
+        mock_run.side_effect = [
+            type("obj", (object,), {"returncode": 0})(),  # git rev-parse --git-dir (success)
+            subprocess.CalledProcessError(1, "git fetch"),  # git fetch (fails)
+        ]
+        assert check_git_up_to_date() is True
+
+
+def test_check_git_up_to_date_when_git_rev_parse_head_fails():
+    """Test that check_git_up_to_date returns True when git rev-parse HEAD fails."""
+    with patch("subprocess.run") as mock_run:
+        # Mock git commands to simulate git rev-parse HEAD failure
+        mock_run.side_effect = [
+            type("obj", (object,), {"returncode": 0})(),  # git rev-parse --git-dir (success)
+            type("obj", (object,), {"returncode": 0})(),  # git fetch (success)
+            type("obj", (object,), {"returncode": 0, "stdout": "main\n"}),  # git rev-parse --abbrev-ref HEAD (success)
+            subprocess.CalledProcessError(1, "git rev-parse HEAD"),  # git rev-parse HEAD (fails)
+        ]
+        assert check_git_up_to_date() is True
+
+
+def test_check_git_up_to_date_when_git_rev_parse_origin_fails():
+    """Test that check_git_up_to_date returns True when git rev-parse origin/branch fails."""
+    with patch("subprocess.run") as mock_run:
+        # Mock git commands to simulate git rev-parse origin/branch failure
+        mock_run.side_effect = [
+            type("obj", (object,), {"returncode": 0})(),  # git rev-parse --git-dir (success)
+            type("obj", (object,), {"returncode": 0})(),  # git fetch (success)
+            type("obj", (object,), {"returncode": 0, "stdout": "main\n"}),  # git rev-parse --abbrev-ref HEAD (success)
+            type("obj", (object,), {"returncode": 0, "stdout": "abc123\n"}),  # git rev-parse HEAD (success)
+            subprocess.CalledProcessError(1, "git rev-parse origin/main"),  # git rev-parse origin/main (fails)
+        ]
+        assert check_git_up_to_date() is True
