@@ -10,12 +10,22 @@ A Python utility for checking and installing the `uv` package manager.
 - **Comprehensive Testing**: Full test coverage with pytest
 - **Code Quality**: Linting with ruff and code formatting
 
+## Requirements
+
+- uv (for dependency management and Python version handling)
+
 ## Installation
 
 ```bash
-# Clone the repository
+# Option 1: Clone the repository
 git clone <repository-url>
 cd infra-uv
+
+# Option 2: Add as git subtree (for tracking updates)
+git subtree add --prefix=infra-uv <repository-url> main --squash
+
+# Option 3: Add as git submodule (for tracking updates)
+git submodule add <repository-url> infra-uv
 
 # Install dependencies
 uv sync --extra dev
@@ -55,81 +65,14 @@ if install_uv():
 
 ### Available Commands
 
-```bash
-# Install dependencies
-just install-dev
-
-# Run tests with coverage
-just test
-
-# Run linting
-just lint
-
-# Run both tests and linting (CI checks)
-just ci
-
-# Check if uv is installed
-just check-uv
-
-# Dry run installation analysis
-just dry-run-uv
-
-# Install uv if needed
-just install-uv
-
-# View coverage report
-just coverage-report
-
-# Clean up cache files
-just clean
-```
-
-### Testing
-
-The project includes comprehensive tests with 100% coverage:
-
-```bash
-# Run tests
-just test
-
-# Run tests with verbose output
-just test-v
-
-# Run tests with coverage
-just test-cov
-```
-
-### Code Quality
-
-```bash
-# Run linting
-just lint
-
-# Format code (if using black)
-just fmt
-```
-
-## CI/CD
-
-The project includes GitHub Actions workflows that run on:
-
-- **Push to main/master**: Runs tests and linting
-- **Pull Requests**: Runs tests and linting
-
-### CI Pipeline
-
-1. **Setup**: Python 3.10, 3.11, 3.12, 3.13
-2. **Dependencies**: Install with `uv sync --extra dev`
-3. **Linting**: Run `ruff check .`
-4. **Testing**: Run `pytest` with coverage
-5. **Coverage**: Upload to Codecov
-6. **Demo**: Run the main script
-
-## Requirements
-
-- Python 3.10+
-- uv (for dependency management)
-
-## License
-
-[Add your license here]
+| Command | Description |
+|---------|-------------|
+| `just install-dev` | Install development dependencies |
+| `just test` | Run tests with coverage |
+| `just lint` | Run linting |
+| `just ci` | Run both tests and linting (CI checks) |
+| `just check-uv` | Check if uv is installed |
+| `just dry-run-uv` | Dry run installation analysis |
+| `just install-uv` | Install uv if needed |
+| `just coverage-report` | View coverage report |
+| `just clean` | Clean up cache files |
