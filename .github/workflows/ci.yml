@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/astral-sh/uv:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: just install-dev
+
+      - name: Run linting
+        run: just lint
+
+      - name: Run tests
+        run: just test
+
+      - name: Run the main script
+        run: just run

@@ -12,7 +12,7 @@ install:
 install-dev:
     uv sync --extra dev
 
-# Run tests
+# Run tests with coverage
 test:
     uv run pytest
 
@@ -20,9 +20,13 @@ test:
 test-v:
     uv run pytest -v
 
-# Run tests with coverage
+# Run tests with coverage (redundant now since test includes coverage)
 test-cov:
     uv run pytest --cov=uv_check
+
+# Open coverage report in browser
+coverage-report:
+    open htmlcov/index.html
 
 # Run the main script
 run:
@@ -35,6 +39,10 @@ check-uv:
 # Install uv if not already installed
 install-uv:
     uv run python -c "from uv_check import install_uv; print('UV install result:', install_uv())"
+
+# Dry run to check if uv needs installation
+dry-run-uv:
+    uv run python -c "from uv_check import dry_run_install_uv; import json; result = dry_run_install_uv(); print(json.dumps(result, indent=2))"
 
 # Format code
 fmt:
@@ -55,3 +63,8 @@ clean:
     rm -rf __pycache__
     rm -rf tests/__pycache__
     find . -name "*.pyc" -delete
+
+# Run CI checks locally (lint + test)
+ci:
+    just lint
+    just test
