@@ -223,7 +223,6 @@ def test_command_line_script_installation():
         with (
             patch("uv_check.is_uv_installed") as mock_check,
             patch("uv_check.dry_run_install_uv") as mock_dry_run,
-            patch("builtins.print") as mock_print,
         ):
             mock_check.return_value = True
             mock_dry_run.return_value = {
@@ -246,12 +245,13 @@ def test_command_line_script_installation():
 def test_entry_point_configuration():
     """Test that the entry point configuration in pyproject.toml is correct."""
     import os
+
     import toml
 
     # Read the pyproject.toml file
     pyproject_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "pyproject.toml")
 
-    with open(pyproject_path, "r") as f:
+    with open(pyproject_path) as f:
         config = toml.load(f)
 
     # Check that the scripts section exists
@@ -293,7 +293,7 @@ def test_command_line_execution():
 
     except subprocess.TimeoutExpired:
         # If it times out, that's a failure
-        assert False, "uv_check command timed out"
+        raise AssertionError("uv_check command timed out") from None
     except FileNotFoundError:
         # If the module can't be found, that's okay - this test is for when the package is installed
         pass
@@ -304,7 +304,6 @@ def test_git_repository_installation_and_execution():
     import os
     import subprocess
     import tempfile
-    import shutil
 
     # This test simulates the exact scenario we tested manually:
     # 1. Create a new uv project
@@ -339,7 +338,7 @@ def test_git_repository_installation_and_execution():
             # Update pyproject.toml requires-python
             import toml
 
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 config = toml.load(f)
             config["project"]["requires-python"] = ">=3.13"
             with open(pyproject_path, "w") as f:
