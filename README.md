@@ -70,7 +70,9 @@ if install_uv():
 | `just install-dev` | Install development dependencies |
 | `just test` | Run tests with coverage |
 | `just lint` | Run linting |
-| `just ci` | Run both tests and linting (CI checks) |
+| `just fmt-check` | Check code formatting |
+| `just fmt` | Format code |
+| `just ci` | Run linting, formatting, and tests (CI checks) |
 | `just check-uv` | Check if uv is installed |
 | `just check-git` | Check if git is up to date |
 | `just dry-run-uv` | Dry run installation analysis |

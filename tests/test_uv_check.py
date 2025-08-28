@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 # Add the parent directory to the path so we can import uv_check
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from uv_check import dry_run_install_uv, install_uv, is_uv_installed, main, check_git_up_to_date, ensure_git_up_to_date
+from uv_check import check_git_up_to_date, dry_run_install_uv, ensure_git_up_to_date, install_uv, is_uv_installed, main
 
 
 def test_is_uv_installed_when_available():
@@ -13,9 +13,7 @@ def test_is_uv_installed_when_available():
     with patch("subprocess.run") as mock_run:
         mock_run.return_value.returncode = 0
         assert is_uv_installed() is True
-        mock_run.assert_called_once_with(
-            ["uv", "--version"], capture_output=True, check=True
-        )
+        mock_run.assert_called_once_with(["uv", "--version"], capture_output=True, check=True)
 
 
 def test_is_uv_installed_when_not_available():

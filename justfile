@@ -50,11 +50,15 @@ check-git:
 
 # Format code
 fmt:
-    uv run black .
+    uv run ruff format .
 
 # Lint code
 lint:
     uv run ruff check .
+
+# Check formatting
+fmt-check:
+    uv run ruff format --check .
 
 # Type check
 type-check:
@@ -68,7 +72,8 @@ clean:
     rm -rf tests/__pycache__
     find . -name "*.pyc" -delete
 
-# Run CI checks locally (lint + test)
+# Run CI checks locally (lint + format + test)
 ci:
     just lint
+    just fmt-check
     just test

@@ -71,8 +71,7 @@ def dry_run_install_uv() -> dict:
     else:
         return {
             "needs_install": True,
-            "message": "uv is not installed and would be installed using: "
-            + UV_INSTALL_COMMAND,
+            "message": "uv is not installed and would be installed using: " + UV_INSTALL_COMMAND,
         }
 
 
@@ -117,9 +116,7 @@ def main():
 
     print("\n=== Summary ===")
     print(f"UV Status: {'Installed' if is_uv_installed() else 'Not Installed'}")
-    print(
-        f"Action Required: {'Install' if dry_run_result['needs_install'] else 'None'}"
-    )
+    print(f"Action Required: {'Install' if dry_run_result['needs_install'] else 'None'}")
 
 
 if __name__ == "__main__":
