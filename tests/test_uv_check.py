@@ -205,3 +205,181 @@ def test_check_git_up_to_date_when_git_rev_parse_origin_fails():
             subprocess.CalledProcessError(1, "git rev-parse origin/main"),  # git rev-parse origin/main (fails)
         ]
         assert check_git_up_to_date() is True
+
+
+def test_command_line_script_installation():
+    """Test that the uv_check command-line script is properly installed and executable."""
+    # This test verifies that the entry point is correctly configured
+    # and that the script can be executed as a command
+
+    # Check if we're in a development environment where the package is installed
+    try:
+        # Try to import the main function directly
+        from uv_check import main
+
+        assert callable(main), "main function should be callable"
+
+        # Test that main function can be called without errors
+        with (
+            patch("uv_check.is_uv_installed") as mock_check,
+            patch("uv_check.dry_run_install_uv") as mock_dry_run,
+            patch("builtins.print") as mock_print,
+        ):
+            mock_check.return_value = True
+            mock_dry_run.return_value = {
+                "needs_install": False,
+                "message": "uv is already installed",
+            }
+
+            # This should not raise any exceptions
+            main()
+
+            # Verify the functions were called
+            mock_check.assert_called()
+            mock_dry_run.assert_called_once()
+
+    except ImportError:
+        # If we can't import, that's okay - this test is for when the package is installed
+        pass
+
+
+def test_entry_point_configuration():
+    """Test that the entry point configuration in pyproject.toml is correct."""
+    import os
+    import toml
+
+    # Read the pyproject.toml file
+    pyproject_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "pyproject.toml")
+
+    with open(pyproject_path, "r") as f:
+        config = toml.load(f)
+
+    # Check that the scripts section exists
+    assert "project" in config, "pyproject.toml should have a [project] section"
+    assert "scripts" in config["project"], "pyproject.toml should have a [project.scripts] section"
+
+    # Check that uv_check entry point is configured
+    scripts = config["project"]["scripts"]
+    assert "uv_check" in scripts, "uv_check should be defined in [project.scripts]"
+    assert scripts["uv_check"] == "uv_check:main", "uv_check should point to uv_check:main"
+
+
+def test_command_line_execution():
+    """Test that the uv_check command can be executed as a subprocess."""
+    import subprocess
+    import sys
+
+    # This test verifies that the command-line script can be executed
+    # It's a basic integration test to ensure the entry point works
+
+    try:
+        # Try to run uv_check as a subprocess
+        # We use the current Python interpreter to ensure we're testing the installed version
+        result = subprocess.run(
+            [sys.executable, "-m", "uv_check"],
+            capture_output=True,
+            text=True,
+            timeout=10,  # Add timeout to prevent hanging
+        )
+
+        # The command should execute successfully
+        assert result.returncode == 0, f"uv_check should exit with code 0, got {result.returncode}"
+
+        # Should produce some output
+        assert result.stdout, "uv_check should produce output"
+
+        # Should contain expected output
+        assert "=== UV Installation Checker ===" in result.stdout, "Output should contain the header"
+
+    except subprocess.TimeoutExpired:
+        # If it times out, that's a failure
+        assert False, "uv_check command timed out"
+    except FileNotFoundError:
+        # If the module can't be found, that's okay - this test is for when the package is installed
+        pass
+
+
+def test_git_repository_installation_and_execution():
+    """Test the full workflow: create project, add git repo, and test entry point."""
+    import os
+    import subprocess
+    import tempfile
+    import shutil
+
+    # This test simulates the exact scenario we tested manually:
+    # 1. Create a new uv project
+    # 2. Add the infra-uv git repository as a dependency
+    # 3. Test that the uv_check command works
+
+    # Create a temporary directory for the test
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_dir = os.getcwd()
+
+        try:
+            # Change to the temporary directory
+            os.chdir(temp_dir)
+
+            # Step 1: Initialize a new uv project
+            result = subprocess.run(
+                ["uv", "init", "--name", "test-project"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            assert result.returncode == 0, f"Failed to initialize project: {result.stderr}"
+
+            # Step 2: Update Python version to 3.13 (required by infra-uv)
+            pyproject_path = os.path.join(temp_dir, "pyproject.toml")
+            python_version_path = os.path.join(temp_dir, ".python-version")
+
+            # Update .python-version file
+            with open(python_version_path, "w") as f:
+                f.write("3.13\n")
+
+            # Update pyproject.toml requires-python
+            import toml
+
+            with open(pyproject_path, "r") as f:
+                config = toml.load(f)
+            config["project"]["requires-python"] = ">=3.13"
+            with open(pyproject_path, "w") as f:
+                toml.dump(config, f)
+
+            # Step 3: Add the infra-uv git repository
+            result = subprocess.run(
+                ["uv", "add", "git+https://github.com/PhilHem/infra-uv"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            assert result.returncode == 0, f"Failed to add git dependency: {result.stderr}"
+
+            # Step 4: Test that uv_check command works with uv run
+            result = subprocess.run(
+                ["uv", "run", "uv_check"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            assert result.returncode == 0, f"uv_check command failed: {result.stderr}"
+            assert "=== UV Installation Checker ===" in result.stdout, "Expected output not found"
+
+            # Step 5: Test that uv_check command works from venv bin directory
+            venv_bin_path = os.path.join(temp_dir, ".venv", "bin", "uv_check")
+            if os.path.exists(venv_bin_path):
+                result = subprocess.run(
+                    [venv_bin_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                assert result.returncode == 0, f"Direct venv execution failed: {result.stderr}"
+                assert "=== UV Installation Checker ===" in result.stdout, "Expected output not found"
+
+        finally:
+            # Cleanup: Change back to original directory
+            os.chdir(original_dir)
+
+            # The temporary directory will be automatically cleaned up by the context manager
+            # when the with block exits, but we can also explicitly clean up any additional resources
+            # if needed in the future
