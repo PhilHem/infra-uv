@@ -20,13 +20,13 @@ jobs:
           version: latest
 
       - name: Install dependencies
-        run: uvx just install-dev
+        run: uv sync --extra dev
 
       - name: Run linting
-        run: uvx just lint
+        run: uv run ruff check .
 
       - name: Run tests
-        run: uvx just test
+        run: uv run pytest
 
       - name: Run the main script
-        run: uvx just run
+        run: uv run python uv_check.py
